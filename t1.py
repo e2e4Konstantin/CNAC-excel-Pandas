@@ -2,7 +2,7 @@ import pandas as pd
 from utilites import SourceData
 
 fp = r"F:\Kazak\Google Диск\1_KK\Job_CNAC\office_targets\tasck_2\sources"
-fn = r"template_3_68_v_1.xlsx"
+fn = r"template_3_68_v_2.xlsx"
 
 # print("не нулевых значений в столбце G: ", df[df.columns[6]].count())
 # print(df.iat[13, 6])

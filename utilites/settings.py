@@ -3,6 +3,10 @@ import sys
 import re
 import pandas
 
+DEBUG_ON = False
+
+TABLES_NUMBER_PATTERN = re.compile(r"\d+\.\d+-\d+\.")
+
 STRONG_MATCH = True
 SOFT_MATCH = False
 
@@ -74,7 +78,7 @@ class SourceData(Stuff):
 
     def __str__(self):
         return f"файл: {self.full_path}\nтаблица: {self.sheet_name}', строк: {self.row_max + 1}, столбцов: {self.column_max + 1}\n" \
-               f"pandas.version: {pandas.__version__} \n{self.df}"  #
+               f"pandas.version: {pandas.__version__}"  #  \n{self.df}
 
     def get_cell_str_value(self, row, column) -> str:
         # value: str = "" if pd.isnull(tmp_val) else tmp_val
