@@ -21,11 +21,30 @@ pattern_rulls = {
     "L": (re.compile(r"Дополнительные расценки"), STRONG_MATCH),
     "O": (re.compile(r"Атрибуты"), STRONG_MATCH),
 }
+pattern_common = {
+    "B": (re.compile(r"\d+"), STRONG_MATCH),  # 3
+    "C": (re.compile(r"\d+\.\d+"), STRONG_MATCH),  # 3.6
+    "D": (re.compile(r"\d+\.\d+(-\d+){1}"), STRONG_MATCH),  # 3.6-1
+    "E": (re.compile(r"\d+\.\d+(-\d+){2}"), STRONG_MATCH),  # 3.6-1-1
+    "F": (re.compile(r"\d+\.\d+(-\d+){4}"), STRONG_MATCH),  # 3.6-1-1-0-1
+}
+
+pattern_quote = {"G": (re.compile(r"\d+\.\d+(-\d+)+"), STRONG_MATCH),}  # номер расценки '3.1-1-5'
+pattern_quote.update(pattern_common)
+
+pattern_table = {
+    "G": (re.compile(r"^\s*$"), STRONG_MATCH),  # пустая строка
+    "H": (re.compile(r"Таблица \d+\.\d+-\d+\."), SOFT_MATCH),
+    "L": (re.compile(r"Дополнительные расценки"), STRONG_MATCH),
+    "O": (re.compile(r"Атрибуты"), STRONG_MATCH),
+}
+pattern_table.update(pattern_common)
 
 
 class Stuff:
     def __init__(self, *args, **kwargs):
         self.test_points = pattern_rulls
+        self.test_templates = {"quote": pattern_quote, "table": pattern_table}
         self.column_number = {}
         self.column_number_generate()
 
@@ -51,13 +70,13 @@ class SourceData(Stuff):
         self.full_path = None
         self.df: pandas.DataFrame()
 
-        self.row_max = 0
-        self.column_max = 0
+        self.row_max = 0                # максимальный индекс строки
+        self.column_max = 0             # максимальный индекс колонки
         self.get_full_name()
         self.get_data()
 
     def get_full_name(self):
-        fullpath = os.path.abspath(os.path.join(self.file_path, self.file_name, ))
+        fullpath = os.path.abspath(os.path.join(self.file_path, self.file_name))
         self.full_path = fullpath if os.path.exists(fullpath) else None
         if not self.full_path:
             print(f"--> Не найден фйл: '{self.file_name}' в папке: '{self.file_path}'")
@@ -68,8 +87,8 @@ class SourceData(Stuff):
             if self.full_path:
                 self.df = pandas.read_excel(self.full_path, sheet_name=self.sheet_name, header=None, dtype="object")
                 if not self.df.empty:
-                    self.row_max = self.df.shape[0]
-                    self.column_max = self.df.shape[1]
+                    self.row_max = self.df.shape[0]-1
+                    self.column_max = self.df.shape[1]-1
                 else:
                     raise TypeError(self.__class__)
         except Exception as err:
