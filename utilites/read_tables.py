@@ -2,6 +2,8 @@ from .quote_definition import Header, HeaderOption, tables, TableItem
 from .settings import SourceData, TABLES_NUMBER_PATTERN, DEBUG_ON
 import pprint
 import os
+import csv
+from dataclasses import fields
 
 
 def read_tables(data: SourceData):
@@ -27,7 +29,7 @@ def read_tables(data: SourceData):
             return not (False in sign_luck)
         return False
 
-    def attributes_get(row):
+    def attributes_get_old(row):
         """ Читает названия атрибутов начиная с колонки 'О' до тех пор пока сверху пусто"""
         attributes_title.clear()
         column_a = data.get_column_number("O")
@@ -38,6 +40,20 @@ def read_tables(data: SourceData):
             column_a += 1
             attribute_name = data.get_cell_str_value(row, column_a)
             up_is_empty = not bool(data.get_cell_str_value(row - 1, column_a))
+
+    def attributes_get(row) -> int:
+        """ Читает названия атрибутов начиная с колонки 'О' до тех пор пока сверху пусто"""
+        attributes_title.clear()
+        column_a = data.get_column_number("O")
+        result = column_a
+        for column_i in range(column_a, data.column_max + 1):
+            result = column_i
+            attribute_name = data.get_cell_str_value(row, column_i)
+            if column_i > column_a and bool(data.get_cell_str_value(row - 1, column_i)):
+                break
+            if attribute_name:
+                attributes_title.append(Header(name_header=attribute_name, column_header=column_i))
+        return result
 
     def skip_empty_cells(row, columns) -> int:
         """ Пропускает пустые ячейки в текущей строке начиная с колонки columns """
@@ -54,26 +70,31 @@ def read_tables(data: SourceData):
         # print(f"\t skip_empty_cells: {row}, {columns}, -> '{cell_value}' ")
         # return columns
 
+    def read_options(row, column) -> int:
+        option_name = data.get_cell_str_value(row - 1, column)
+        if option_name:
+            result = column
+            option = HeaderOption(column_header_option=column, name_header_option=option_name)
+            for ci in range(column, data.column_max + 1):
+                result = ci
+                if ci > column and bool(data.get_cell_str_value(row - 1, ci)):
+                    break
+                option_header = data.get_cell_str_value(row, ci)
+                if option_header:
+                    option.option_headers.append(Header(name_header=option_header, column_header=ci))
+            options_title.append(option)
+            return result
+        else:
+            return data.column_max
+
     def options_get(row, start_columns):
         """ """
-        column_i = start_columns
-        options_title.clear()  # очищаем список параметров
-        while column_i <= data.column_max:
-            column_i = skip_empty_cells(row, column_i)
-            if column_i <= data.column_max:
-                option_name = data.get_cell_str_value(row - 1, column_i)
-                if option_name:
-                    current_option = HeaderOption(column_header_option=column_i, name_header_option=option_name)
-                    option_header_i = data.get_cell_str_value(row, column_i)
-                    up_is_empty = True
-                    while option_header_i and up_is_empty and column_i <= data.column_max:
-                        current_option.option_headers.append(
-                            Header(name_header=option_header_i, column_header=column_i))
-                        column_i += 1
-                        if column_i <= data.column_max:
-                            option_header_i = data.get_cell_str_value(row, column_i)
-                            up_is_empty = not bool(data.get_cell_str_value(row - 1, column_i))
-                    options_title.append(current_option)
+        options_title.clear()
+        column_i = skip_empty_cells(row, start_columns)
+        while column_i < data.column_max:
+            column_i = read_options(row, column_i)
+            # column_i += 1
+            # column_i = skip_empty_cells(row, column_i)+1
 
     def pop_in_table_data(row):
         cod_table = data.get_cell_str_value(row, data.get_column_number("F"))
@@ -86,9 +107,9 @@ def read_tables(data: SourceData):
         for column_i in range(data.get_column_number("B"), data.get_column_number("F")):
             catalog.append(data.get_cell_str_value(row, column_i))
         # читаем заголовки атрибутов
-        attributes_get(row)
+        column_options_start = attributes_get(row)
         # читаем заголовки параметров
-        column_options_start = attributes_title[-1:][0].column_header + 1  # номер колонки последнего атрибута +1
+        # column_options_start = attributes_title[-1:][0].column_header + 1  # номер колонки последнего атрибута +1
         options_get(row, column_options_start)
 
         tmp_tables = TableItem(cod_table=cod_table, number_table=number_table, name_table=name_table, row_table=row)
@@ -129,3 +150,11 @@ def read_tables(data: SourceData):
         with open(fp, 'w', encoding='utf-8') as file_out:
             for i in range(len(broken_format_tables)):
                 file_out.write(f"{i + 1:<5}: {broken_format_tables[i]}\n")
+
+        fp = r".\output\broken_tables.csv"
+        with open(fp, 'w', newline='') as file:
+            writer = csv.writer(file, delimiter=';')
+            [writer.writerow(t) for t in broken_format_tables]
+
+
+

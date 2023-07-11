@@ -1,6 +1,8 @@
 from .quote_definition import tables, quotes, Attribute, Quote, Option, heap
 from .settings import SourceData, DEBUG_ON
 from .verifications import check_by_list
+import csv
+from dataclasses import fields
 
 
 def get_quote(data: SourceData, row) -> Quote:
@@ -61,7 +63,7 @@ def get_quote(data: SourceData, row) -> Quote:
 def read_quotes(data: SourceData):
     quotes_without_table = 0
     all_quotes = 0
-    for row_i in range(0, data.row_max+1):
+    for row_i in range(0, data.row_max + 1):
         base_test = check_by_list(data, row_i, ['B', 'C', 'D', 'E', 'F', 'G'], "quote")
         if base_test:
             table_cod = data.get_cell_str_value(row_i, data.get_column_number("F"))
@@ -81,17 +83,34 @@ def read_quotes(data: SourceData):
     print("\n", f"Прочитано расценок: {all_quotes}")
     print(f"\tзаписано: {len(quotes)}")
     print(f"\tпустые атрибуты и параметры: {len(heap)}")
-    qtable = len(quotes)+len(heap)
+    qtable = len(quotes) + len(heap)
     print(f"\tв таблицах: {qtable}")
     print(f"\tбез таблиц: {all_quotes - qtable}")
 
-    fp = r".\output\fine_quotes.txt"
-    with open(fp, 'w', encoding='utf-8') as file_out:
-        for i in range(len(quotes)):
-            file_out.write(f"{i+1:<5}: {quotes[i].short_str()}\n")
+    if len(quotes) > 0:
+        fp = r".\output\fine_quotes.txt"
+        with open(fp, 'w', encoding='utf-8') as file_out:
+            for i in range(len(quotes)):
+                file_out.write(f"{i + 1:<5}: {quotes[i]}\n")  # .short_str()
 
-    fp = r".\output\bug_quotes.txt"
-    with open(fp, 'w', encoding='utf-8') as file_out:
-        for i in range(len(heap)):
-            file_out.write(f"{i + 1:<5}: {heap[i].short_str()}\n")
+        column_name = [x.name for x in fields(quotes[0])]
+        fp = r".\output\fine_quotes.csv"
+        with open(fp, 'w', newline='') as file:
+            writer = csv.writer(file, delimiter=';')  #
+            writer.writerow(column_name)
+            [writer.writerow(q.csv_list()) for q in quotes]
+
+
+    if len(heap) > 0:
+        fp = r".\output\bug_quotes.txt"
+        with open(fp, 'w', encoding='utf-8') as file_out:
+            for i in range(len(heap)):
+                file_out.write(f"{i + 1:<5}: {heap[i]}\n")  # .short_str()
+
+        column_name = [x.name for x in fields(heap[0])]
+        fp = r".\output\bug_quotes.csv"
+        with open(fp, 'w', newline='') as file:
+            writer = csv.writer(file, delimiter=';')  #
+            writer.writerow(column_name)
+            [writer.writerow(q.csv_list()) for q in heap]
 

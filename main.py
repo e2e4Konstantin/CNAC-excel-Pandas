@@ -3,10 +3,12 @@ from utilites import read_tables, read_quotes
 import pprint
 import os
 
+# fp = r"F:\Kazak\Google Диск\1_KK\Job_CNAC\office_targets\tasck_2\tmp2"
+
 fp = r"F:\Kazak\Google Диск\1_KK\Job_CNAC\office_targets\tasck_2\sources"
 # fn = r"template_3_68.xlsx"
-# fn = r"template_4_68.xlsx"
-fn = r"template_5_67.xlsx"
+fn = r"template_4_68.xlsx"
+# fn = r"template_5_67.xlsx"
 
 data = SourceData(file_name=fn, file_path=fp, sheet_name='name')
 print(data, "\n")

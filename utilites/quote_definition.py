@@ -61,14 +61,18 @@ class Quote:
     options_quote: list[Option] = field(default_factory=list)
 
     def __str__(self):
-        s = ', '.join(f'{x.name}={getattr(self, x.name)!r}' for x in fields(self))
+        s = '; '.join(f'{x.name}={getattr(self, x.name)!r}' for x in fields(self))
         return f'{type(self).__name__}({s})'
 
     def short_str(self):
         s = f"{self.cod_quote}; {self.name_quote}; {self.table_quote}; {self.parameterized_quote}; " \
             f"{self.attributes_quote}; {self.options_quote};"
         return s
-
+    # def csv_str(self):
+    #     s = ';'.join(f'{getattr(self, x.name)!r}' for x in fields(self))
+    #     return s
+    def csv_list(self):
+        return [getattr(self, x.name) for x in fields(self)]
 
 QUOTE_TYPE: list[str] = ["основная", "дополнительная"]
 

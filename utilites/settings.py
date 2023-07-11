@@ -41,6 +41,8 @@ pattern_table = {
 pattern_table.update(pattern_common)
 
 
+
+
 class Stuff:
     def __init__(self, *args, **kwargs):
         self.test_points = pattern_rulls
